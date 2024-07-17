@@ -61,7 +61,7 @@ include('./phpservices/config.php'); ?>
 
 </head>
 
-<body>
+<body class="horizontal-side-menu">
 
     <!-- begin::page loader-->
     <div class="page-loader">
@@ -99,8 +99,6 @@ include('./phpservices/config.php'); ?>
                             </figure>
                         </a>
                         <div class="dropdown-menu dropdown-menu-right">
-                            <a href="#" data-sidebar-target="#settings" class="sidebar-open dropdown-item">Settings</a>
-                            <div class="dropdown-divider"></div>
                             <a href="logout.php" class="text-danger dropdown-item">Logout</a>
                         </div>
                     </li>

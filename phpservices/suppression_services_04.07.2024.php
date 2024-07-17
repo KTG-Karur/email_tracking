@@ -4,55 +4,6 @@ include('config.php');
 
 $type = $_REQUEST['services_type'];
 
-function insertBulkDetails($con, $tableName, $tableColumn, $rows) {
-    $columns = implode(", ", $tableColumn);
-    $values = [];
-    $params = [];
-    foreach ($rows as $rowIndex => $row) {
-        $placeholders = [];
-        foreach ($row as $colIndex => $value) {
-            $params[] = $value;
-            $placeholders[] = '$' . (count($params));
-        }
-        $values[] = '(' . implode(", ", $placeholders) . ')';
-    }
-    $conflictColumn = $tableColumn[0]; // Assuming the first column is the unique key column
-    $sql = "INSERT INTO $tableName ($columns) VALUES " . implode(", ", $values) . " ON CONFLICT ($conflictColumn) DO NOTHING";
-    return pg_query_params($con, $sql, $params);
-}
-
-function processFile($con, $filePath, $delimiter, $tableName, $tableColumn, $suppression_id, $maxBatchSize = 1000) {
-    $rows = [];
-    $handle = fopen($filePath, 'r');
-    if ($handle) {
-        while (($line = fgetcsv($handle, 0, $delimiter)) !== FALSE) {
-            $line = array_map('trim', $line);
-            if (!empty(array_filter($line))) {
-                $params = array_merge($line, [$suppression_id]);
-                $rows[] = array_map(function ($value) {
-                    return $value === '' ? null : $value;
-                }, $params);
-                if (count($rows) >= $maxBatchSize) {
-                    if (!insertBulkDetails($con, $tableName, $tableColumn, $rows)) {
-                        fclose($handle);
-                        return ['status' => 'false', 'error' => pg_last_error($con)];
-                    }
-                    $rows = [];
-                }
-            }
-        }
-        fclose($handle);
-        if (!empty($rows)) {
-            if (!insertBulkDetails($con, $tableName, $tableColumn, $rows)) {
-                return ['status' => 'false', 'error' => pg_last_error($con)];
-            }
-        }
-        return ['status' => 'true'];
-    } else {
-        return ['status' => 'false', 'error' => 'Error opening the file'];
-    }
-}
-
 if ($type == 'addSuppression') {
     $required_params = ['suppression_type'];
 
@@ -62,7 +13,6 @@ if ($type == 'addSuppression') {
             exit();
         }
     }
-
     $suppression_type = $_REQUEST['suppression_type'];
     $suppression_file_name = $_FILES['file']['name'];
 
@@ -115,12 +65,75 @@ if ($type == 'addSuppression') {
                     exit();
             }
 
+            function insertDetails($con, $tableName, $tableColumn, $params, $ifCheck)
+            {
+                if ($ifCheck) {
+                    $mail_id = $params[0];
+                    $checkResult = pg_query_params($con, "SELECT 1 FROM $tableName WHERE mail_id = $1", [$mail_id]);
+                    if (pg_num_rows($checkResult) > 0) {
+                        return true; // Mail ID already exists, so skip this record
+                    }
+                }
+
+                $columns = implode(", ", $tableColumn);
+                $values = implode(", ", array_map(function($index) { return '$' . ($index + 1); }, array_keys($tableColumn)));
+                $sql = "INSERT INTO $tableName ($columns) VALUES ($values)";
+                return pg_query_params($con, $sql, $params);
+            }
+
+            $error_occurred = false;
+            $data = ['status' => 'false']; // Default status
+
             if ($ext == 'txt') {
-                $data = processFile($con, $_FILES['file']['tmp_name'], '|', $tableName, $tableColumn, $suppression_id);
+                $fh = fopen($_FILES['file']['tmp_name'], 'r');
+                if ($fh) {
+                    while (!feof($fh)) {
+                        $line_of_text = fgets($fh);
+                        if (trim($line_of_text) !== "") {
+                            $parts = array_map('trim', explode('|', $line_of_text));
+                            if (count($parts) >= (count($tableColumn) - 1)) {
+                                $params = array_merge($parts, [$suppression_id]);
+                                $params = array_map(function ($value) {
+                                    return $value === '' ? null : $value;
+                                }, $params);
+                                if (!insertDetails($con, $tableName, $tableColumn, $params, $ifCheck)) {
+                                    $error_occurred = true;
+                                    $data = ['status' => 'false', 'error' => pg_last_error($con)];
+                                    break;
+                                }
+                            } else {
+                                $data = array('status' => 'false', 'error' => 'Missing Parameters');
+                                break;
+                            }
+                        }
+                    }
+                    fclose($fh);
+                    if (!$error_occurred) $data = array('status' => 'true');
+                } else {
+                    $data = array('status' => 'false', 'error' => 'Error opening the file');
+                }
             } elseif ($ext == 'csv') {
                 $csvMimes = ['text/csv', 'application/csv', 'application/vnd.ms-excel'];
                 if (in_array($_FILES['file']['type'], $csvMimes)) {
-                    $data = processFile($con, $_FILES['file']['tmp_name'], ',', $tableName, $tableColumn, $suppression_id);
+                    $csvFile = fopen($_FILES['file']['tmp_name'], 'r');
+                    if ($csvFile) {
+                        fgetcsv($csvFile); // Skip header
+                        while (($line = fgetcsv($csvFile)) !== FALSE) {
+                            $line_arr = array_map('trim', $line);
+                            if (!empty(array_filter($line_arr))) {
+                                $params = array_merge($line_arr, [$suppression_id]);
+                                if (!insertDetails($con, $tableName, $tableColumn, $params, $ifCheck)) {
+                                    $error_occurred = true;
+                                    $data = ['status' => 'false', 'error' => pg_last_error($con)];
+                                    break;
+                                }
+                            }
+                        }
+                        fclose($csvFile);
+                        if (!$error_occurred) $data = ['status' => 'true'];
+                    } else {
+                        $data = array('status' => 'false', 'error' => 'Error opening CSV file');
+                    }
                 } else {
                     $data = array('status' => 'false', 'error' => 'Invalid file type or no file uploaded');
                 }

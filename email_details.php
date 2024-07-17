@@ -16,6 +16,18 @@
         background-color: #dde0e3;
         cursor: pointer;
     }
+
+    .form-group label {
+        display: block;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        width: 100%;
+    }
+
+    .form-group {
+        margin-bottom: 5px;
+    }
 </style>
 <!-- begin::main content -->
 <main class="main-content">
@@ -41,7 +53,7 @@
                         <h5 class="card-title">Email Information</h5>
                         <form class="" id="emailForm">
                             <div class="row">
-                                <div class="col-md-4">
+                                <div class="col-md-2">
                                     <div class="form-group">
                                         <label>Email Id
                                             <span style="color:red;font-size: 20px;font-weight: bold;">*</span>
@@ -49,7 +61,7 @@
                                         <input type="text" class="form-control" id="emid" name="emid" placeholder="Enter Email id">
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-2">
                                     <div class="form-group">
                                         <label>User Mail Id
                                             <span style="color:red;font-size: 20px;font-weight: bold;">*</span>
@@ -57,7 +69,7 @@
                                         <input type="text" class="form-control" id="email" name="email" placeholder="Enter User Mail Id">
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-2">
                                     <div class="form-group">
                                         <label>Data Stat Id
                                             <span style="color:red;font-size: 20px;font-weight: bold;">*</span>
@@ -65,39 +77,45 @@
                                         <input type="text" class="form-control" id="ds" name="ds" placeholder="Enter Data Stat Id">
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-2">
                                     <div class="form-group">
-                                        <label>Yahoo
+                                        <label>ISP Type
                                             <span style="color:red;font-size: 20px;font-weight: bold;">*</span>
                                         </label>
-                                        <input type="text" class="form-control" id="yahoo" name="yahoo" placeholder="Enter Yahoo">
+                                        <select class="js-example-basic-single" id="isp_type" name="isp_type">
+                                            <option value="yahoo">Yahoo</option>
+                                            <option value="comcast">Comcast</option>
+                                            <option value="hotmail">Hotmail</option>
+                                            <option value="gmail">Gmail</option>
+                                            <option value="aol">Aol</option>
+                                        </select>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-2">
                                     <div class="form-group">
                                         <label>Entry Date of db</label>
                                         <input type="text" name="single-date-picker" id="edate" class="form-control">
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-2">
                                     <div class="form-group">
                                         <label>When user subscribed in internet ip</label>
                                         <input type="text" class="form-control" id="e_ip" name="e_ip" placeholder="Enter internet ip">
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-2">
                                     <div class="form-group">
                                         <label>First Name</label>
                                         <input type="text" class="form-control" id="fname" name="fname" placeholder="Enter First Name">
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-2">
                                     <div class="form-group">
                                         <label>Last Name</label>
                                         <input type="text" class="form-control" id="lname" name="lname" placeholder="Enter Last Name">
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-2">
                                     <div class="form-group">
                                         <label>User subscribed website
                                             <span style="color:red;font-size: 20px;font-weight: bold;">*</span>
@@ -105,25 +123,25 @@
                                         <input type="text" class="form-control" id="suburl" name="suburl" placeholder="Enter User subscribed website">
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-2">
                                     <div class="form-group">
                                         <label>When user subscribed in website</label>
                                         <input type="text" name="single-date-picker" id="subdate" class="form-control">
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-2">
                                     <div class="form-group">
                                         <label>User clicked the mail</label>
                                         <input type="text" name="single-date-picker" id="click" class="form-control">
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-2">
                                     <div class="form-group">
                                         <label>User opened the mail</label>
                                         <input type="text" name="single-date-picker" id="open" class="form-control">
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-2">
                                     <div class="form-group">
                                         <label>Flag
                                             <span style="color:red;font-size: 20px;font-weight: bold;">*</span>
@@ -221,7 +239,7 @@
                     email: true
                 },
                 ds: "required",
-                yahoo: "required",
+                isp_type: "required",
                 suburl: "required",
                 flag: "required",
             },
@@ -232,7 +250,7 @@
                     email: '<small class="form-text text-danger">Please enter the vaild user mail id.</small>'
                 },
                 ds: '<small class="form-text text-danger">Please enter the data stat id.</small>',
-                yahoo: '<small class="form-text text-danger">Please enter the yahoo.</small>',
+                isp_type: '<small class="form-text text-danger">Please enter the isp type.</small>',
                 suburl: '<small class="form-text text-danger">Please enter the user subscribed website.</small>',
                 flag: '<small class="form-text text-danger">Please enter the flag.</small>',
             },
@@ -295,7 +313,7 @@
                                 icon: 'error',
                                 title: 'Oops...',
                                 text: 'Something went wrong!',
-                                footer: status
+                                text: json.error || 'An error occurred',
                             });
                         }
                     },
@@ -391,7 +409,7 @@
                 $('#emid').val(json.emid);
                 $('#email').val(json.email);
                 $('#ds').val(json.ds);
-                $('#yahoo').val(json.yahoo);
+                $('#isp_type').val(json.isp_type);
                 $('#edate').val(moment(json.edate).format('DD-MM-YYYY'));
                 $('#e_ip').val(json.e_ip);
                 $('#fname').val(json.fname);
@@ -414,7 +432,7 @@
             let formData = new FormData();
             formData.append('file', uploadEmailFile);
             formData.append('services_type', 'uploadEmail');
-
+            $(".page-loader").show();
             $.ajax({
                 url: "phpservices/email_services.php",
                 data: formData,
@@ -424,6 +442,7 @@
                 success: function(data) {
                     var json = JSON.parse(data);
                     status = json.status;
+                    $(".page-loader").hide();
                     if (status == 'true') {
                         $('#uploadEmailFile').val('');
                         var table = $('#emailTable').DataTable();

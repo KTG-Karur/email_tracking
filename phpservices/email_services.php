@@ -5,11 +5,11 @@ include('config.php');
 $type = $_REQUEST['services_type'];
 
 if ($type == 'addEmail') {
-    $required_params = ['emid', 'email', 'ds', 'yahoo', 'edate', 'e_ip', 'fname', 'lname', 'suburl', 'subdate', 'click', 'open', 'flag'];
+    $required_params = ['emid', 'email', 'ds', 'isp_type', 'edate', 'e_ip', 'fname', 'lname', 'suburl', 'subdate', 'click', 'open', 'flag'];
 
     foreach ($required_params as $param) {
         if (!isset($_REQUEST[$param])) {
-            echo json_encode(array('status' => 'missing_parameters'));
+            echo json_encode(array('status' => 'false', 'error' => 'Missing Parameters'));
             exit();
         }
     }
@@ -17,7 +17,7 @@ if ($type == 'addEmail') {
     $emid = $_REQUEST['emid'];
     $email = $_REQUEST['email'];
     $ds = $_REQUEST['ds'];
-    $yahoo = $_REQUEST['yahoo'];
+    $isp_type = $_REQUEST['isp_type'];
     $edate = date('Y-m-d', strtotime($_REQUEST['edate']));
     $e_ip = $_REQUEST['e_ip'];
     $fname = $_REQUEST['fname'];
@@ -31,12 +31,19 @@ if ($type == 'addEmail') {
     $flags = ["Active", "Bounce", "Complaint", "Unsubscribe"];
 
     if (!in_array($flag, $flags)) {
-        echo json_encode(array('status' => 'invalid_flag'));
+        echo json_encode(array('status' => 'false', 'error' => 'Invalid flag'));
+        exit();
+    }
+
+    $isp_types = ["yahoo", "comcast", "hotmail", "gmail", "aol"];
+
+    if (!in_array($isp_type, $isp_types)) {
+        echo json_encode(array('status' => 'false', 'error' => 'Invalid isp type'));
         exit();
     }
 
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        echo json_encode(array('status' => 'invalid_email'));
+        echo json_encode(array('status' => 'false', 'error' => 'Invalid email'));
         exit();
     }
 
@@ -46,13 +53,13 @@ if ($type == 'addEmail') {
     } else {
         $insertResult = pg_query_params(
             $con,
-            "INSERT INTO tbl_email_details (emid, email, ds, yahoo, edate, e_ip, fname, lname, suburl, subdate, click, open, flag, create_by, c_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)",
-            array($emid, $email, $ds, $yahoo, $edate, $e_ip, $fname, $lname, $suburl, $subdate, $click, $open, $flag, $create_by, $c_date)
+            "INSERT INTO tbl_email_details (emid, email, ds, isp_type, edate, e_ip, fname, lname, suburl, subdate, click, open, flag, create_by, c_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)",
+            array($emid, $email, $ds, $isp_type, $edate, $e_ip, $fname, $lname, $suburl, $subdate, $click, $open, $flag, $create_by, $c_date)
         );
         if ($insertResult) {
             $data = array('status' => 'true');
         } else {
-            $data = array('status' => 'false');
+            $data = array('status' => 'false', 'error' => 'An error occurred');
             echo "Error: " . pg_last_error($con);
         }
     }
@@ -99,11 +106,11 @@ if ($type == 'getEmail') {
         $sub_array[] = $row['ds'];
 
         if ($row['edit_by'] === null) {
-            $creator_query = pg_query_params($con, "SELECT staff_name FROM staff WHERE id=$1", array($row['create_by']));
+            $creator_query = pg_query_params($con, "SELECT staff_name FROM tbl_staff WHERE staff_id=$1", array($row['create_by']));
             $creator_info = pg_fetch_assoc($creator_query);
             $last_updated = '<span class="badge badge-success">Created by ' . $creator_info['staff_name'] . ' on<br>' . $row['c_date'] . '</span>';
         } else {
-            $editor_query = pg_query_params($con, "SELECT staff_name FROM staff WHERE id=$1", array($row['edit_by']));
+            $editor_query = pg_query_params($con, "SELECT staff_name FROM tbl_staff WHERE staff_id=$1", array($row['edit_by']));
             $editor_info = pg_fetch_assoc($editor_query);
             $last_updated = '<span class="badge badge-warning text-white">Edited by ' . $editor_info['staff_name'] . ' on<br>' . $row['e_date'] . '</span>';
         }
@@ -152,11 +159,11 @@ if ($type == 'editEmail') {
 }
 
 if ($type == 'updateEmail') {
-    $required_params = ['emid', 'email', 'ds', 'yahoo', 'edate', 'e_ip', 'fname', 'lname', 'suburl', 'subdate', 'click', 'open', 'flag'];
+    $required_params = ['emid', 'email', 'ds', 'isp_type', 'edate', 'e_ip', 'fname', 'lname', 'suburl', 'subdate', 'click', 'open', 'flag'];
 
     foreach ($required_params as $param) {
         if (!isset($_REQUEST[$param])) {
-            echo json_encode(array('status' => 'missing_parameters'));
+            echo json_encode(array('status' => 'false', 'error' => 'Missing Parameters'));
             exit();
         }
     }
@@ -164,7 +171,7 @@ if ($type == 'updateEmail') {
     $emid = $_REQUEST['emid'];
     $email = $_REQUEST['email'];
     $ds = $_REQUEST['ds'];
-    $yahoo = $_REQUEST['yahoo'];
+    $isp_type = $_REQUEST['isp_type'];
     $edate = date('Y-m-d', strtotime($_REQUEST['edate']));
     $e_ip = $_REQUEST['e_ip'];
     $fname = $_REQUEST['fname'];
@@ -179,12 +186,19 @@ if ($type == 'updateEmail') {
     $flags = ["Active", "Bounce", "Complaint", "Unsubscribe"];
 
     if (!in_array($flag, $flags)) {
-        echo json_encode(array('status' => 'invalid_flag'));
+        echo json_encode(array('status' => 'false', 'error' => 'Invalid flag'));
+        exit();
+    }
+
+    $isp_types = ["yahoo", "comcast", "hotmail", "gmail", "aol"];
+
+    if (!in_array($isp_type, $isp_types)) {
+        echo json_encode(array('status' => 'false', 'error' => 'Invalid isp type'));
         exit();
     }
 
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        echo json_encode(array('status' => 'invalid_email'));
+        echo json_encode(array('status' => 'false', 'error' => 'Invalid email'));
         exit();
     }
 
@@ -192,12 +206,13 @@ if ($type == 'updateEmail') {
     if ($checkResult && pg_num_rows($checkResult) > 0) {
         $data = array('status' => 'exists');
     } else {
-        $updateResult = pg_query_params($con, "UPDATE tbl_email_details SET emid=$1, email=$2, ds=$3, yahoo=$4, edate=$5, e_ip=$6, fname=$7, lname=$8, suburl=$9, subdate=$10, click=$11, open=$12, flag=$13, edit_by=$14, e_date=$15 WHERE email_details_id=$16", array($emid, $email, $ds, $yahoo, $edate, $e_ip, $fname, $lname, $suburl, $subdate, $click, $open, $flag, $edit_by, $e_date, $edit_id));
+        $updateResult = pg_query_params($con, "UPDATE tbl_email_details SET emid=$1, email=$2, ds=$3, isp_type=$4, edate=$5, e_ip=$6, fname=$7, lname=$8, suburl=$9, subdate=$10, click=$11, open=$12, flag=$13, edit_by=$14, e_date=$15 WHERE email_details_id=$16", array($emid, $email, $ds, $isp_type, $edate, $e_ip, $fname, $lname, $suburl, $subdate, $click, $open, $flag, $edit_by, $e_date, $edit_id));
 
         if ($updateResult) {
             $data = array('status' => 'true');
         } else {
-            $data = array('status' => 'false');
+            $data = array('status' => 'false', 'error' => 'An error occurred');
+            echo "Error: " . pg_last_error($con);
         }
     }
     echo json_encode($data);
@@ -208,7 +223,7 @@ if ($type == 'uploadEmail') {
         $ext = pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION);
 
         function insertEmailDetails($con, $params) {
-            $sql = "INSERT INTO tbl_email_details (emid, email, ds, yahoo, edate, e_ip, fname, lname, suburl, subdate, click, open, flag, create_by, c_date) 
+            $sql = "INSERT INTO tbl_email_details (emid, email, ds, isp_type, edate, e_ip, fname, lname, suburl, subdate, click, open, flag, create_by, c_date) 
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)";
             return pg_query_params($con, $sql, $params);
         }
@@ -231,7 +246,7 @@ if ($type == 'uploadEmail') {
                                 break;
                             }
                         } else {
-                            $data = array('status' => 'missing_parameters');
+                            $data = array('status' => 'false', 'error' => 'Missing Parameters');
                             break;
                         }
                     }
@@ -239,7 +254,7 @@ if ($type == 'uploadEmail') {
                 fclose($fh);
                 if (!$error_occurred) $data = array('status' => 'true');
             } else {
-                $data = array('status' => 'Error opening the file');
+                $data = array('status' => 'false', 'error' => 'Error opening the file');
             }
         } elseif ($ext == 'csv') {
             $csvMimes = array('text/csv', 'application/csv', 'application/vnd.ms-excel');
@@ -284,10 +299,10 @@ if ($type == 'uploadEmail') {
                 $data = array('status' => 'false', 'error' => 'Invalid file type or no file uploaded');
             }
         } else {
-            $data = array('status' => 'false', 'error' => 'Invalid file type only ');
+            $data = array('status' => 'false', 'error' => 'Invalid file type');
         }
     } else {
-        $data = array('status' => 'File upload error');
+        $data = array('status' => 'false', 'error' => 'File upload error');
     }
     echo json_encode($data);
     exit();
